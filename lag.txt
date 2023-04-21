@@ -1,0 +1,76 @@
+-- lag поднимает значение вверх на 12 строк назад и получется в отдельных столбцах выборка по разным годам
+
+SELECT 
+    month, in2020, in2021, 
+    in2021-in2020 as diff FROM (
+    SELECT 
+        year, month, income as in2021,
+        LAG(income, 12) OVER () as in2020 -- поднимает значение вверх на 12 строк назад и получется в отдельных столбцах выборка по разным годам
+    FROM revenues
+) t
+WHERE year = 2021
+ORDER BY month
+
+select 
+	month(date) as month,
+	sum(amount) as month_revenue,
+	lag(sum(amount)) over(order by month(date)) as prev, -- доходы за предыдущий месяц
+        sum(amount) - lag(sum(amount)) over(order by month(date)) as diff, -- разница между текущим и предыдущим
+	-- значение перврго месяца сравнено с 0 с отставанием на 1
+	sum(amount) - lag(sum(amount), 1, 0) over(order by month(date)) as d,
+	-- значение первого месяца сравнивается с суммарным значением за первый месяц с отставанием на 1
+	sum(amount) - lag(sum(amount), 1, sum(amount)) over(order by month(date)) as di,
+	-- если отставание на 3, то значеине lag , будет находиться ниже на 3 строки (в четвертой)
+	sum(amount) - lag(sum(amount), 3, sum(amount)) over(order by month(date)) as dif,
+	-- если 3, то значеине lead , будет находиться выше (лидировать) на 3 строки (в четвертой)
+	sum(amount) - lead(sum(amount), 3, sum(amount)) over(order by month(date)) as dif
+from orders
+where year(date)=2021
+group by month
+order by month
+
+-- поквартальный расчет
+
+SELECT 
+   quarter, sum(in2020) as in2020, sum(in2021) as in2021, 
+   sum(in2021-in2020) as diff FROM 
+    (
+     SELECT 
+	-- concart делает из двух разных столбцов year и month одну дату и затем из нее можно получить квартал 
+	-- с помощью quarter
+        year, quarter(CONCAT_WS('-', '2022', month, '01')) as quarter, income as in2021, 
+       LAG(income, 12) OVER () as in2020 
+        -- поднимает значение вверх на 12 строк назад и получется в отдельных столбцах выборка по разным годам
+   FROM revenues
+ ) t
+WHERE year = 2021
+group by quarter
+ORDER BY quarter;
+
+В таблице ниже содержатся данные по продажам за 2020 и 2021 годы. Наша задача построить прогноз продаж на 2022 год.
+
+-- Для простоты будем считать, что темпы роста остаются постоянными, поэтому за основу возьмем такой алгоритм. 
+-- Ожидаемый доход за произвольный месяц 2022 года равен доходу за этот месяц в 2021 году умноженному на процент 
+-- прироста этого месяца в 2021 году относительно 2020 года.
+
+-- Например, чтобы посчитать ожидаемый доход за январь 2022 года, мы берем 520000 (январь 2021) и умножаем 
+-- на (520000 / 400000) (январь 2021 / январь 2020), что дает 676000 рублей:
+-- 520000 x (520000 / 400000) = 676000
+
+-- Выведите ожидаемые доходы на весь 2022 год (12 месяцев). Первый столбец итоговой таблицы должен называться month 
+-- и содержать порядковый номер месяца. Второй столбец (plan) должен содержать величину планируемого 
+-- дохода с округлением до целого.
+
+SELECT 
+    month, 
+    -- in2020, in2021, 
+    round(in2021*(in2021/in2020),0) as plan
+    -- in2021-in2020 as diff 
+    FROM (
+    SELECT 
+        year, month, income as in2021,
+        LAG(income, 12) OVER () as in2020 -- поднимает значение вверх на 12 строк назад и получется в отдельных столбцах выборка по разным годам
+    FROM revenues
+) t
+WHERE year = 2021
+ORDER BY month;

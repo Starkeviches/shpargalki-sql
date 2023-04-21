@@ -1,0 +1,22 @@
+-- данные с нарастающим итогом, если в один день проводилось несколько операций, тогда считается по id (баланс
+-- при каждой совершенной операции)
+
+select *, sum(money) over(order by date, id) as balance from transactions;
+
+-- с начальным балансом
+
+select 0 as id, '2022-01-01' as date, 'Начальный баланс' as item, 10000 as money, 10000 as balance
+union
+select *, 10000 + sum(money) over(order by date, id) as balance from transactions;
+
+-- с нарастающим итогом и учетом разницы между доходами и инвестициями
+
+select *, sum(income-outcome) over(order by year, month) as ror from revenues;
+
+-- через сколько месяцев окупится
+
+select max(num)+1 as months from (
+select *, sum(income-outcome) over(order by year, month) as dohod,
+row_number() over() as num
+from revenues) number
+where dohod<1;

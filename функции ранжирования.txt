@@ -1,0 +1,29 @@
+-- три самые дешевые квартиры
+
+select street, house, price, rooms from
+(select street, house, price, rooms,
+rank() over(order by price) as num_r
+from flats
+where rooms>1) r
+where num_r<4
+order by rooms desc, price;
+
+-- три самые дешевые 2-х и 3-х квартиры 
+
+select rooms, street, house, price  from
+(select street, house, price, rooms,
+rank() over(partition by rooms order by price) as num_r
+from flats
+where rooms>1) r
+where num_r<4
+order by rooms, price;
+
+-- 2-х и 3-х комнатные квартиры с тремя разными самыми низкими ценами
+select street, house, price, rooms from
+(select street, house, price, rooms,
+dense_rank() over(order by price) as num_r
+from flats
+where rooms>1 
+) r
+where num_r<4 
+order by price, rooms desc;

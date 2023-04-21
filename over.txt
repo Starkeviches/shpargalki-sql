@@ -1,0 +1,18 @@
+select *, sum(amount) over() as total, -- в колонку добавляет итоговые значанеия которые посчитаны sum(amount)
+          sum(amount) over(partition by month(date)) as month_total, -- разбивка сумм по месяцам
+          amount*100/sum(amount) over(partition by month(date)) as perc, -- подсчет процента дохода с разбивкой по месяцам
+          amount*100/sum(amount) over() as perc_id -- процент по каждому id заказа
+from orders
+where year(date)=2021;
+
+-- over с округлением round
+
+select month, year, 
+round(revenue*100/sum(revenue) over(partition by year),1) as month_percent -- процент прибыли по каждому месяцу года
+from revenues
+order by year, month;
+
+-- процент от общей доли
+
+select *, round(count*price*100/sum(count*price) over(),1) as percent from products
+order by percent desc, id;

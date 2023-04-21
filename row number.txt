@@ -1,0 +1,85 @@
+-- нумирация только с оконными функциями 
+
+-- Для MySQL
+
+select row_number () over()-1 as num, -- нумирация с О
+       row_number() over(partition by month(date) order by id) as num_row,
+          sum(amount) over() as total, -- в колонку добавляет итоговые значанеия которые посчитаны sum(amount)
+          sum(amount) over(partition by month(date)) as month_total, -- разбивка сумм по месяцам
+          amount*100/sum(amount) over(partition by month(date)) as perc, -- подсчет процента дохода с разбивкой по месяцам
+          amount*100/sum(amount) over() as perc_id -- процент по каждому id заказа
+from orders
+where year(date)=2021;
+
+-- место фильма в рейтинге
+
+select row_number() over () as place,
+name, rating 
+from films
+order by rating desc;
+
+-- номера в пределах жанров с сортировкой
+
+select genre, 
+row_number() over(partition by genre order by rating desc) as genre_place, rating, name from films
+order by genre, genre_place;
+
+-- с limit
+
+select row_number() over() as num, name, count, price from products
+order by price
+limit 10,5;
+
+-- Для SQL Server в over нужно прописывать осортировку order by
+
+select row_number() over(order by id)-1 as num_row, -- нумирация с О, если без -1, то начало с 1
+       row_number() over(partition by month(date) order by id) as num_row,
+          id, date, amount,
+          sum(amount) over() as total,                               -- в колонку добавляет итоговые значанеия которые посчитаны sum(amount)
+          sum(amount) over(partition by month(date)) as month_total, -- разбивка сумм по месяцам
+          amount*100/sum(amount) over(partition by month(date)) as perc, -- подсчет процента дохода с разбивкой по месяцам
+          amount*100/sum(amount) over() as perc_id                         -- процент по каждому id заказа
+from orders
+where year(date)=2021;
+
+-- В таблице films содержится информация о фильмах: id, рейтинг, год выпуска, количество голосов и жанр. 
+-- Напишите SQL-запрос, который выведет четыре столбца: жанр, место фильма в рейтинге в пределах своего жанра 
+-- (колонка genre_place), рейтинг фильма и его название.
+-- Учитывайте, что места нужно расставить от 1 до N, где 1 будет у самого популярного фильма.
+-- Итоговые данные нужно сперва отсортировать по жанру, а потом по месту фильма.
+
+select genre, 
+row_number() over(partition by genre order by rating desc) as genre_place, rating, name from films
+order by genre, genre_place;
+
+-- простановка места согласно кол-ву очков, а сортировка по id
+
+select *, row_number () over(order by points desc) as place from results
+order by id;
+
+-- нумерация по кол-ву очков, а если очки одинавковые, то по времени, кто быстрее, у того выше место
+
+select *,
+row_number() over (order by points desc, time) as place
+from results order by place;
+
+-- с подзапросом, выбрать только два самых рейтинговых в своем жанре
+
+select name, rating, genre from
+(select name, rating, genre, 
+row_number() over(partition by genre order by rating desc) as dva from films) as s_row
+where s_row.dva<3
+order by rating desc; 
+
+-- формула для расчета декады: year-(year%10)
+-- year % 10 - это остаток от деления года на 10, по факту он всегда будет возвращать последнюю цифру года:
+-- 1986 % 10 = 6
+-- Далее из года вычитаем последнюю цифру и получаем декаду 1986 - 6 = 1980
+
+-- место фильма по рейтингу в декаде
+
+select year-(year%10) as decade,
+row_number() over(partition by year-(year%10) order by rating desc) as place, name from films
+order by 1,2;
+
+-- только четные месяцы: where month % 2 = 0

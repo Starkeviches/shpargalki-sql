@@ -1,0 +1,20 @@
+select ntile(3) over(order by id) as mail_variant, -- расперделили на 3 почти равных случайных сегмента
+id, email, first_name from users
+order by id;
+
+-- Таблицы ниже содержат данные о покупателях и их заказах в различных магазинах сети.
+-- Напишите SQL запрос, который выведет 5 колонок: name — название магазина, first_name — имя покупателя, 
+-- last_name — фамилия покупателя, amount — общая сумма выполненных заказов (status="success") покупателя в текущем 
+-- магазине, c_level — группа (уровень) покупателя.
+-- Всех покупателей магазин делит на четыре равные группы, нумеруя их от 1 (потратили больше всего) до 4 
+-- (потратили меньше всего). При этом для каждого магазина группы считаются по отдельности.
+-- Итоговые данные отсортируйте по названию магазина, а после по группам в возрастающем порядке.
+
+select name, first_name, last_name, sum(amount) as amount,
+ntile(4) over(partition by name order by sum(amount) desc) as c_level 
+from orders o
+inner join users u on o.user_id=u.id
+inner join shops s on o.shop_id=s.id
+where status='success'
+group by name, first_name, last_name
+order by name, c_level;
