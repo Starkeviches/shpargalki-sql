@@ -1,0 +1,4 @@
+Удалить из таблицы supply книги тех авторов, общее количество экземпляров книг которых в таблице book превышает 10.
+
+delete from supply where author in
+(select author from book group by author having sum(amount)>10);

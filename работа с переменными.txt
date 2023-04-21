@@ -1,0 +1,12 @@
+SET @nr := 1; /* Переменная для номера строки */
+SET @np := 0; /* Переменная для номера program_id */
+
+UPDATE applicant_order
+   SET str_id =
+       IF(program_id = @np, /* Если номер program_id равен значению переменной (для первой строки таблицы 1 = 0, для второй 1 = 1, смотри AND), то: */
+       @nr := @nr + 1, /* установи str_id = 1 + 1, а если нет, то: */
+       @nr := 1 /* установи str_id = 1 */
+       AND @np := program_id); /* а для следующей строки измени значение переменной на номер program_id */
+
+SELECT *
+  FROM applicant_order;

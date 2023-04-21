@@ -1,0 +1,2 @@
+select * from products where count>0 order by price desc limit 3,5 -- первое число (3) - сколько пропустить, 
+                                                                   -- второе - сколько вывести

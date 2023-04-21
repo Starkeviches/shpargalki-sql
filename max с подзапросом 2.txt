@@ -1,0 +1,21 @@
+Вывести жанр (или жанры), в котором было заказано больше всего экземпляров книг, 
+указать это количество. Последний столбец назвать Количество.
+
+SELECT vse_g.name_genre, vse_g.sum_amount as Количество
+          FROM 
+              ( /* выбираем код жанра и количество произведений, относящихся к нему */
+                SELECT genre.name_genre, SUM(buy_book.amount) AS sum_amount
+                FROM book
+                INNER JOIN genre ON book.genre_id = genre.genre_id
+                inner join buy_book on book.book_id = buy_book.book_id  
+                GROUP BY genre.genre_id
+               ) vse_g
+          inner join
+              (
+                select genre.name_genre, sum(buy_book.amount) as sum_amount
+                from book
+                inner join genre using (genre_id)
+                inner join buy_book using (book_id)
+                group by genre.genre_id order by 2 desc limit 1
+               ) top_g
+           on vse_g.sum_amount=top_g.sum_amount
